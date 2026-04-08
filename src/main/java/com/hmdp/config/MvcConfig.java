@@ -20,9 +20,9 @@ public class MvcConfig implements WebMvcConfigurer {
         // 刷新 token 的拦截器，拦截所有请求
         registry.addInterceptor(new RefreshTokenInterceptor(stringRedisTemplate))
                 .addPathPatterns("/**")
-                .order(0);
+                .order(0);//order是用来指定执行顺序的，刷新的优先执行
 
-        // 登录拦截器，拦截需要登录的请求
+        // 登录拦截器，拦截需要登录的请求,拦截的是部分请求
         registry.addInterceptor(new LoginInterceptor())
                 .excludePathPatterns(
                         "/user/code",
