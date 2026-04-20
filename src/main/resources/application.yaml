@@ -9,9 +9,9 @@ spring:
     username: root
     password: 123456
   redis:
-    host: 127.0.0.1 #要连接的虚拟机的地址
-    port: 6379
-    password: 123321
+    host:  ${REDIS_HOST:127.0.0.1}  #要连接的虚拟机的地址
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
     lettuce:
       pool:
         max-active: 10
@@ -25,3 +25,12 @@ mybatis-plus:
 logging:
   level:
     com.hmdp: debug
+ai:
+  chat:
+    api-key: ${AI_API_KEY:}
+    base-url:  ${AI_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions}
+    model: ${AI_MODEL:gpt-4o-mini}
+    max-history: 10
+    session-ttl-minutes: 30
+    timeout-millis: 20000
+    qa-cache-ttl-minutes: 20

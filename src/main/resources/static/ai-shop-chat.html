@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>AI智能问店</title>
+    <style>
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            background: #f6f7fb;
+            margin: 0;
+            padding: 32px;
+            color: #1f2937;
+        }
+        .panel {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+            padding: 24px;
+        }
+        .title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .desc {
+            color: #6b7280;
+            margin-bottom: 20px;
+        }
+        .row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .field {
+            flex: 1;
+        }
+        label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #4b5563;
+        }
+        input, textarea, button {
+            width: 100%;
+            box-sizing: border-box;
+            border-radius: 10px;
+            border: 1px solid #d1d5db;
+            padding: 12px;
+            font-size: 15px;
+        }
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        button {
+            background: #ff6b35;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 16px;
+            border-radius: 12px;
+            background: #f9fafb;
+            white-space: pre-wrap;
+            line-height: 1.7;
+        }
+        .meta {
+            margin-top: 12px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<div class="panel">
+    <div class="title">AI智能问店 Demo</div>
+    <div class="desc">默认走后端 /ai/shop/chat 接口。未配置模型密钥时，会自动降级为本地规则回复，方便演示。</div>
+
+    <div class="row">
+        <div class="field">
+            <label for="shopId">店铺ID</label>
+            <input id="shopId" value="1">
+        </div>
+        <div class="field">
+            <label for="sessionId">会话ID</label>
+            <input id="sessionId" placeholder="留空则自动生成">
+        </div>
+    </div>
+
+    <div class="field">
+        <label for="message">问题</label>
+        <textarea id="message" placeholder="例如：这家店现在还营业吗？有什么优惠券？"></textarea>
+    </div>
+
+    <div class="row">
+        <div class="field">
+            <button id="sendBtn" type="button">发送问题</button>
+        </div>
+    </div>
+
+    <div class="result" id="answerBox">这里会显示回答结果</div>
+    <div class="meta" id="metaBox"></div>
+</div>
+
+<script>
+    const sessionInput = document.getElementById('sessionId');
+    const savedSessionId = localStorage.getItem('ai_shop_session_id');
+    if (savedSessionId) {
+        sessionInput.value = savedSessionId;
+    }
+
+    document.getElementById('sendBtn').addEventListener('click', async () => {
+        const shopId = document.getElementById('shopId').value.trim();
+        const sessionId = sessionInput.value.trim();
+        const message = document.getElementById('message').value.trim();
+        const answerBox = document.getElementById('answerBox');
+        const metaBox = document.getElementById('metaBox');
+
+        if (!shopId || !message) {
+            answerBox.textContent = 'shopId 和问题不能为空';
+            return;
+        }
+
+        answerBox.textContent = '请求中...';
+        metaBox.textContent = '';
+
+        try {
+            const response = await fetch('/ai/shop/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({shopId: Number(shopId), sessionId, message})
+            });
+            const result = await response.json();
+            if (!result.success) {
+                answerBox.textContent = result.errorMsg || '请求失败';
+                return;
+            }
+
+            const data = result.data;
+            answerBox.textContent = data.answer;
+            metaBox.textContent = `sessionId: ${data.sessionId} | mode: ${data.mode} | tools: ${(data.toolUsed || []).join(', ') || 'none'}`;
+            sessionInput.value = data.sessionId;
+            localStorage.setItem('ai_shop_session_id', data.sessionId);
+        } catch (error) {
+            answerBox.textContent = '请求异常：' + error.message;
+        }
+    });
+</script>
+</body>
+</html>
